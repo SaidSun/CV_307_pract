@@ -1,4 +1,4 @@
-# Block6: Camera Calibration and Live Distance Check
+# QR code searching, Camera Calibration and Live Distance Check
 
 Этот блок содержит автономный скрипт `calibrate_and_check.py` для:
 
