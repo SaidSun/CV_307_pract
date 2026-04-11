@@ -1,125 +1,45 @@
-# QR code searching, Camera Calibration and Live Distance Check
+# CV307 YOLO Pipeline
 
-Этот блок содержит автономный скрипт `calibrate_and_check.py` для:
+## 1) Install dependencies
 
-1. калибровки камеры по шахматной доске;
-2. live-проверки положения камеры относительно доски (оси `X/Y/Z` и итоговое расстояние `|R|`).
-
-
----
-
-`QRsearch.py` предназначен для live-сканирования QR-кодов:
-
-- захватывает поток с камеры;
-- детектирует и декодирует QR через `cv2.QRCodeDetector`;
-- рисует рамку вокруг QR-кода;
-- выводит распознанный текст поверх кадра;
-- делает перспективное выравнивание области QR для улучшения декодирования.
-
-### Запуск
-
-Из корня проекта `CV307`:
-
-```
-python .\QRsearch.py
+```bash
+pip install ultralytics pillow
 ```
 
-Выход из окна сканера: клавиша `q`.
+## 2) Generate rotated augmentations (90/180/270)
 
-### Важно
-
-## 1) Что нужно для работы
-
-- Python 3.10+ (рекомендуется 3.11/3.12)
-- Веб-камера (или видео/папка с изображениями)
-- Шахматная доска для калибровки (внутренние углы по умолчанию `9x6`)
-- Пакеты:
-  - `opencv-python`
-  - `numpy`
-
----
-
-## 2) Подготовка окружения (PowerShell)
-
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install --upgrade pip
-python -m pip install numpy opencv-python
-```
----
-
-## 3) Запуск скрипта
-
-Базовый запуск с камеры `0`:
-
-```powershell
-python .\calibrate_and_check.py --source 0 --save_path .\out\ --save_images .\out\
+```bash
+python augment_rotate.py --src "CV307_detector_jpeg" --out "dataset_augmented/raw"
 ```
 
-Режим авто-сбора всех валидных кадров:
+Outputs:
+- `dataset_augmented/raw/images`
+- `dataset_augmented/raw/labels`
 
-```powershell
-python .\calibrate_and_check.py --source 0 --save_path .\out\ --save_images .\out\ -a
+## 3) Build train/test dataset and YAML (80/20)
+
+```bash
+python prepare_split.py --src "CV307_detector_jpeg" --aug "dataset_augmented/raw" --out "dataset" --split 0.8 --seed 42
 ```
 
-Запуск с явной целью по количеству кадров:
+Outputs:
+- `dataset/images/train`, `dataset/images/test`
+- `dataset/labels/train`, `dataset/labels/test`
+- `dataset/dataset.yaml`
 
-```powershell
-python .\calibrate_and_check.py --source 0 --save_path .\out\ --save_images .\out\ --target_frames 12
+## 4) Train small YOLO model and print metrics
+
+```bash
+python train_yolo.py --data "dataset/dataset.yaml" --epochs 50 --imgsz 640 --batch 16 --device cpu
 ```
 
----
+Printed metrics:
+- Train: `precision`, `recall`, `mAP50`, `mAP50-95`
+- Test: `precision`, `recall`, `mAP50`, `mAP50-95`
 
-## 4) Аргументы
+## Validation checklist
 
-- `--source`, `-s` (обязательный): источник (`0`, `1`, путь к видео, путь к папке с изображениями)
-- `--save_path`: куда сохранить JSON калибровки (по умолчанию `./out/`)
-- `--save_images`: куда сохранять кадры для калибровки
-- `--all_frames`, `-a`: брать каждый валидный кадр автоматически
-- `--target_frames`: целевое число валидных кадров (по умолчанию `12`)
-- `--pattern_cols`: внутренние углы доски по колонкам (по умолчанию `9`)
-- `--pattern_rows`: внутренние углы доски по строкам (по умолчанию `6`)
-- `--square_size`: размер клетки в метрах (по умолчанию `0.025`)
-- `--source_type`: метка типа камеры для JSON (по умолчанию `rgb`)
-
-Важно: скрипт ожидает шахматную доску (`board_type = chess`).
-
----
-
-## 5) Как проходит работа скрипта
-
-### Шаг A. Калибровка
-
-- Открывается окно `Calibration Studio`.
-- Наведи камеру на шахматную доску.
-- Если `-a` не указан, нажимай `Enter` для сохранения удачного кадра.
-- Для завершения нажми `Q` или `Esc`.
-
-После этого рассчитываются:
-
-- `Camera Matrix` (внутренние параметры камеры),
-- `Distortion Coefficients` (коэффициенты дисторсии),
-- `Total error` (средняя reprojection error).
-
-JSON сохраняется в `--save_path` с именем вида:
-
-`calibration__DD-MM-YYYY_HH-MM-SS.json`
-
-### Шаг B. Live-проверка
-
-- Запускается окно `Live Pose Inspector`.
-- На экране отображаются:
-  - цветные оси над доской (`X` синий, `Y` зеленый, `Z` красный),
-  - координаты `x/y/z` (в метрах),
-  - расстояние `|R|` от начала координат доски до камеры.
-
-Выход: `Q` или `Esc`.
-
----
-
-## 6) Интерпретация результатов
-
-- `Total error` — средняя ошибка перепроецирования в пикселях.
-- Чем меньше значение, тем лучше калибровка.
-
----
+- Check random augmented images and confirm bboxes still match objects.
+- Ensure image and label counts match in both `train` and `test`.
+- Run with same `--seed` and verify split reproducibility.
+- Watch for overfitting: train metrics much higher than test metrics.
