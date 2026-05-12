@@ -1,0 +1,7 @@
+path: ../dataset_person_yolov5
+train: images/train
+val: images/val
+test: images/test
+
+names:
+  0: person
