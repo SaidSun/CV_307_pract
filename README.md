@@ -77,4 +77,4 @@
 
 ## Ссылка на датасетик
 
-
+https://drive.google.com/drive/folders/1sC9hSxCPh-nYmU3GimDryYPrOcPcV-ul
