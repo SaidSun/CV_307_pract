@@ -43,3 +43,8 @@ Printed metrics:
 - Ensure image and label counts match in both `train` and `test`.
 - Run with same `--seed` and verify split reproducibility.
 - Watch for overfitting: train metrics much higher than test metrics.
+
+
+## Link to the dataset
+
+https://drive.google.com/drive/folders/1zRryPbsTY6tmWLxxRldqxbWXbSZN9za_
