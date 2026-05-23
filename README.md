@@ -74,3 +74,7 @@
    - `python train_yolov5_windows.py --yolov5-dir yolov5 --data data/person.yaml --weights yolov5s.pt --img 640 --batch 8 --epochs 100 --device 0`
 4. Запустить детекцию и подсчет:
    - `python YoloDsortDetection.py --weights "yolov5/runs/train/person_yolov5/weights/best.pt" --video "8.avi" --output "output.avi"`
+
+## Ссылка на датасетик
+
+
